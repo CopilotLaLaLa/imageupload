@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>截选遮罩</title>
+	<style type="text/css">
+		*{
+			margin: 0;
+			padding: 0;
+		}
+		.loadbox{
+			width: 1200px;
+			height: 800px;
+			position: relative;
+			top:50px;
+			left:50px;
+			background-color: #eee;
+			overflow: hidden;
+		}
+		.choosebox{
+			width: 300px;
+			height: 300px;
+			position: relative;
+			top:250px;
+			left: 450px;
+			background-color: white;
+		}
+		.choosebox-top{
+			position: absolute;
+			top: 0;
+			left: -3px;
+			height: 3px;
+			width:calc(100% + 6px);
+			border-top: 3px solid black;
+			cursor: n-resize;
+		}
+		.choosebox-left{
+			position: absolute;
+			top: 0;
+			left: -3px;
+			height:100%;
+			width: 3px;
+			border-left: 3px solid black;
+			cursor: w-resize;
+		}
+		.choosebox-right{
+			position: absolute;
+			top: 0;
+			right: -3px;
+			height:100%;
+			width: 3px;
+			border-right: 3px solid black;
+			cursor: e-resize;
+		}
+		.choosebox-bottom{
+			position: absolute;
+			bottom: 0;
+			left: -3px;
+			height: 3px;
+			width:calc(100% + 6px);
+			border-bottom: 3px solid black;
+			cursor: s-resize;
+		}
+	</style>
+</head>
+<body>
+	<div class="loadbox">
+		<div class="choosebox">
+			<div class="choosebox-top"></div>
+			<div class="choosebox-left"></div>
+			<div class="choosebox-right"></div>
+			<div class="choosebox-bottom"></div>
+		</div>
+	</div>
+</body>
+<script type="text/javascript">
+	var cboxtop = document.getElementsByClassName('choosebox-top')[0];//获得顶端拉伸边dom
+	var cboxbottom = document.getElementsByClassName('choosebox-bottom')[0];//获得低部拉伸边dom
+	var cboxleft = document.getElementsByClassName('choosebox-left')[0];//获得左方拉伸边dom
+	var cboxright = document.getElementsByClassName('choosebox-right')[0];//获得右方拉伸边dom
+	var loadbox = document.getElementsByClassName('loadbox')[0];//获得背景画布盒子dom
+	var cbox = document.getElementsByClassName('choosebox')[0];//获得截选盒子dom
+	var  dragging = false;//截选盒子拖拽激活标志
+	var  draggingtop =  false ;//顶端拉伸边激活标志
+	var  draggingbottom = false;//低部拉伸边激活标志
+	var  draggingleft = false;//左方拉伸边激活标志
+	var  draggingright = false;//右方拉伸边激活标志
+	var  dstartX,dstartY, startX,startY;//截选盒子、拉伸边起始坐标
+	var  cboxminh = 150;//截选盒子最低高度
+	var  cboxminw = 150;//截选盒子最少宽度
+
+
+	cboxtop.onmousedown = (e)=>{//顶端拉伸边点击事件
+		e.stopPropagation();
+		startY = e.pageY;
+		draggingtop =  true ;
+	};
+
+	cboxbottom.onmousedown = (e)=>{//底部拉伸边点击事件
+		e.stopPropagation();
+		startY = e.pageY;
+		draggingbottom =  true ;
+	};
+	cboxleft.onmousedown = (e)=>{//左方拉伸边点击事件
+		e.stopPropagation();
+		startX = e.pageX;
+		draggingleft =  true ;
+	};
+	cboxright.onmousedown = (e)=>{//右方拉伸边点击事件
+		e.stopPropagation();
+		startX = e.pageX;
+		draggingright =  true ;
+	};
+
+
+	loadbox.onmousemove= (e)=>{//截选盒子任意边拉伸事件
+		if(draggingtop){
+			let cboxt = getComputedStyle(cbox,false).top;//获取截选盒子top值，返回‘XXpx’
+			cboxt = Number(cboxt.split('px')[0]);//top值字符串转换成number
+			let cboxh = getComputedStyle(cbox,false).height;//获取截选盒子height值，返回‘XXpx’
+			cboxh = Number(cboxh.split('px')[0]);//height值字符串转换成number
+			if((cboxh - (e.pageY - startY))<=cboxminh-1){//截选盒子高度不能少于cboxminh-1px
+				startY = e.pageY;//更新Y轴起点坐标
+				return;
+			}else{
+				cbox.style.top = cboxt + e.pageY - startY +  'px' ; //更新盒子top值
+				cbox.style.height = cboxh - (e.pageY - startY)  +  'px' ;//更新盒子height值
+				startY = e.pageY;//更新Y轴起点坐标
+				return;
+			}
+		}
+		if(draggingbottom){
+			let cboxh = getComputedStyle(cbox,false).height;//获取截选盒子bottom值，返回‘XXpx’
+			cboxh = Number(cboxh.split('px')[0]);//bottom值字符串转换成number
+			if((cboxh + (e.pageY - startY))<=cboxminh){//截选盒子高度不能少于cboxminh
+				cbox.style.height = cboxminh + 'px';//锁定截选盒子高度是cboxminh
+				startY = e.pageY;//更新Y轴起点坐标
+				return;
+			}else{
+				cbox.style.height = cboxh + (e.pageY - startY)  +  'px' ;//更新盒子height值
+				startY = e.pageY;//更新Y轴起点坐标
+				return;
+			}
+		}
+		if(draggingleft){
+			let cboxl = getComputedStyle(cbox,false).left;
+			cboxl = Number(cboxl.split('px')[0]);
+			let cboxw = getComputedStyle(cbox,false).width;
+			cboxw = Number(cboxw.split('px')[0]);
+			if((cboxw - (e.pageX - startX))<=cboxminw-1){
+				startX = e.pageX;
+				return;
+			}else{
+				cbox.style.left = cboxl + e.pageX - startX +  'px' ;
+				cbox.style.width = cboxw - (e.pageX - startX)  +  'px' ;
+				startX = e.pageX;
+				return;
+			}
+		}
+		if(draggingright){
+			let cboxw = getComputedStyle(cbox,false).width;
+			cboxw = Number(cboxw.split('px')[0]);
+			if((cboxw + (e.pageX - startX))<=cboxminw){
+				cbox.style.width = cboxminw+'px';
+				return;
+			}else{
+				cbox.style.width = cboxw + (e.pageX - startX)  +  'px' ;
+				startX = e.pageX;
+				return;
+			}
+		}
+	};
+	loadbox.onmouseup =  (e) =>{//鼠标在背景画布盒子dom抬起时，禁用所有拖拽事件
+        draggingtop =  false ;
+	    draggingbottom = false;
+	    draggingleft = false;
+	    draggingright = false;
+	    dragging =  false;
+    };
+    loadbox.onmouseleave =  (e)=> {//鼠标离开背景画布盒子dom时，禁用所有拖拽事件
+        draggingtop =  false ;
+	    draggingbottom = false;
+	    draggingleft = false;
+	    draggingright = false;
+	    dragging =  false;
+    };
+    cbox.onmousedown =  (e)=>{//鼠标点击截选盒子dom事件，记录起始坐标，激活拖拽标志
+        dstartX = e.pageX;
+        dstartY = e.pageY;
+        dragging =  true;
+    };
+    cbox.onmousemove =(e)=>{//鼠标拖拽截选盒子dom事件
+    	if(dragging){
+    		let cboxh = getComputedStyle(cbox,false).height;//获取截选盒子height值，返回‘XXpx’
+			cboxh = Number(cboxh.split('px')[0]);//height值字符串转换成number
+			let cboxw = getComputedStyle(cbox,false).width;//获取截选盒子width值，返回‘XXpx’
+			cboxw = Number(cboxw.split('px')[0]);//width值字符串转换成number
+			let cboxt = getComputedStyle(cbox,false).top;//获取截选盒子top值，返回‘XXpx’
+			cboxt = Number(cboxt.split('px')[0]);//top值字符串转换成number
+			let cboxl = getComputedStyle(cbox,false).left;//获取截选盒子left值，返回‘XXpx’
+			cboxl = Number(cboxl.split('px')[0]);//left值字符串转换成number
+			let loadboxh = getComputedStyle(loadbox,false).height;//获取背景画布盒子height值，返回‘XXpx’
+			loadboxh = Number(loadboxh.split('px')[0]);//height值字符串转换成number
+			let loadboxw = getComputedStyle(loadbox,false).width;//获取背景画布盒子width值，返回‘XXpx’
+			loadboxw = Number(loadboxw.split('px')[0]);//width值字符串转换成number
+			if( cboxt<=0 && cboxl<=0 &&(e.pageY - dstartY)<=0 && (e.pageX - dstartX)<=0){//截选盒子在左上角限制
+    			cbox.style.top = '0px';//更新截选盒子top值
+				cbox.style.left = '0px';//更新截选盒子leff值
+				dstartY = e.pageY;//更新起点
+        		dstartX = e.pageX;//更新起点
+				return;
+    		}
+    		if( (cboxh+cboxt)>=loadboxh && cboxl<=0 &&(e.pageY - dstartY)>=0 && (e.pageX - dstartX)<=0){//截选盒子在左下角限制
+    			cbox.style.top = loadboxh - cboxh + 'px';
+				cbox.style.left = '0px';
+				dstartY = e.pageY;
+        		dstartX = e.pageX;
+				return;
+    		}
+    		if( cboxt<=0 && (cboxw+cboxl)>=loadboxw &&(e.pageY - dstartY)<=0 && (e.pageX - dstartX)>=0){//截选盒子在右上角限制
+    			cbox.style.top = '0px';
+				cbox.style.left = loadboxw - cboxw + 'px';
+				dstartY = e.pageY;
+        		dstartX = e.pageX;
+				return;
+    		}
+    		if( (cboxh+cboxt)>=loadboxh && (cboxw+cboxl)>=loadboxw &&(e.pageY - dstartY)>=0 && (e.pageX - dstartX)>=0){//截选盒子在右下角限制
+    			cbox.style.top = loadboxh - cboxh + 'px';
+				cbox.style.left = loadboxw - cboxw + 'px';
+				dstartY = e.pageY;
+        		dstartX = e.pageX;
+				return;
+    		}
+    		if (cboxt <=0 && (e.pageY - dstartY)<=0) {//截选盒子在顶部限制
+    			cbox.style.top = '0px';
+    			cbox.style.left = cboxl + e.pageX - dstartX +  'px' ;
+        		dstartY = e.pageY;
+        		dstartX = e.pageX;
+        		return;
+    		}
+    		if (cboxl <=0 && (e.pageX - dstartX)<=0) {//截选盒子在左方限制
+    			cbox.style.top = cboxt+ e.pageY - dstartY +  'px' ;
+    			cbox.style.left = '0px' ;
+        		dstartY = e.pageY;
+        		dstartX = e.pageX;
+        		return;
+    		}
+    		if ((cboxw+cboxl)>=loadboxw &&(e.pageX - dstartX)>=0) {//截选盒子在右方限制
+    			cbox.style.top = cboxt+ e.pageY - dstartY +  'px' ;
+    			cbox.style.left = loadboxw - cboxw + 'px';
+        		dstartY = e.pageY;
+        		dstartX = e.pageX;
+        		return;
+    		}
+    		if ((cboxh+cboxt)>=loadboxh &&(e.pageY - dstartY)>=0) {//截选盒子在底端限制
+    			cbox.style.top = loadboxh - cboxh + 'px';
+    			cbox.style.left = cboxl + e.pageX - dstartX +  'px' ;
+        		dstartY = e.pageY;
+        		dstartX = e.pageX;
+        		return;
+    		}
+    		else{//截选盒子在背景画布盒子内
+    			cbox.style.top = cboxt+ e.pageY - dstartY +  'px' ;
+        		cbox.style.left = cboxl + e.pageX - dstartX +  'px' ;
+        		dstartY = e.pageY;
+        		dstartX = e.pageX;
+        		return;
+    		}
+    		// }
+    	}
+    }
+    cbox.onmouseup = (e) =>{//鼠标抬起时截选盒子dom事件，关闭拖拽
+    	dragging =  false;
+    }
+
+</script>
+</html>
